@@ -1,50 +1,68 @@
-int Sensor = 1;
-int Sensor2 = 4;
-
 #include <CheapStepper.h>
+
+// next, declare the stepper
+// and connect pins 8,9,10,11 to IN1,IN2,IN3,IN4 on ULN2003 board
+
 CheapStepper stepper (8,9,10,11);  
-// here we declare our stepper using default pins:
-// arduino pin <--> pins on ULN2003 board:
-// 8 <--> IN1
-// 9 <--> IN2
-// 10 <--> IN3
-// 11 <--> IN4
-
- // let's create a boolean variable to save the direction of our rotation
 
 
+ // let's also create a boolean variable to save the direction of our rotation
+ // and a timer variable to keep track of move times
+
+bool moveClockwise = false;
 
 
 void setup() {
+
+  // let's run the stepper at 12rpm (if using 5V power) - the default is ~16 rpm
+
+  stepper.setRpm(20);
+
+  // let's print out the RPM to make sure the setting worked
   
-  // let's just set up a serial connection and test print to the console
-  stepper.setRpm(17);
   Serial.begin(9600);
-  Serial.println("Ready to start moving!");
-  pinMode(Sensor2, INPUT);
+  Serial.print("stepper RPM: "); Serial.print(stepper.getRpm());
+  Serial.println();
+
+  // now let's set up our first move...
+  // let's move a half rotation from the start point
+
+  stepper.newMoveTo(moveClockwise, 2048);
+  /* this is the same as: 
+   * stepper.newMoveToDegree(clockwise, 180);
+   * because there are 4096 (default) steps in a full rotation
+   */
+ 
+  
 }
 
 void loop() {
 
-  // let's move a full rotation (4096 mini-steps)
-  // we'll go step-by-step using the step() function
-  if (Sensor == 1){
-    
-    stepper.stepCW();
-    //you could also say stepper.stepCW(); or stepper.stepCCW();
-    // now let's get the current step position of motor
+  // we need to call run() during loop() 
+  // in order to keep the stepper moving
+  // if we are using non-blocking moves
+  
+  stepper.run();
 
-    int nStep = 0;
-    
- 
-    while (digitalRead(Sensor2)==LOW) { 
+  ////////////////////////////////
+  // now the stepper is moving, //
+  // let's do some other stuff! //
+  ////////////////////////////////
 
-      // let's print the position to the console
-      int nStep =+ stepper.getStep();
-      Serial.print("current step position: "); Serial.print(nStep);
-      Serial.println();
-      
-    }
+  // let's check how many steps are left in the current move:
+  
+  int stepsLeft = stepper.getStepsLeft();
+
+  // if the current move is done...
+  
+  if (stepsLeft == 0){
+
+    // let's print the position of the stepper to serial
+    Serial.print("stepper position: "); Serial.print(stepper.getStep());
+    Serial.println();
+    // let's start a new move 
+    stepper.newMoveDegrees (moveClockwise, 180); // move 180 degrees from current position
+
+  }
+
 }
-}
-
