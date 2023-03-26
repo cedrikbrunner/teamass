@@ -1,5 +1,6 @@
 #include <CheapStepper.h>
-
+int steps = 0;
+int n=4000; // number of steps each intervall
 
 CheapStepper stepper (8,9,10,11); 
 boolean moveClockwise = true; // false for CCW
@@ -24,12 +25,16 @@ void loop() {
 
 void steppermove () {
 
-  for (int s=0; s<100; s++){
+  for (int s=0; s<n; s++){
     stepper.step(moveClockwise);
+    steps ++;
     }
 }
 
 void print() {
-  int nStep = stepper.getStep();
-  Serial.println(nStep);
+  Serial.println(steps);
+}
+
+void countingsteps () {
+
 }
