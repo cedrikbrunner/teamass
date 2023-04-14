@@ -41,8 +41,14 @@ void setup() {
 
 // ----------Main Loop ---------- 
 void loop() {
-    extend_C1();
-    retract_C1();
+  if (board_labeled == false) {
+    extend_C2(); //lowers the first swiper
+    extend_C1(); //brings the swiper accross the screen
+    retract_C2(); //raises first swiper
+    extend_C3(); //lowers second swiper
+    retract_C1(); //brings swiper back accross the screen
+    retract_C3(); //retracts second swiper to release board
+    board_labeled = true;
   }
 
   if (digitalRead(S1) == LOW) {
