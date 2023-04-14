@@ -43,12 +43,9 @@ void setup() {
 void loop() {
   if (board_labeled == false) {
     extend_C2(); //lowers the first swiper
-    delay(1000); //just in case
     extend_C1(); //brings the swiper accross the screen
-    delay(1000);
     retract_C2(); //raises first swiper
     extend_C3(); //lowers second swiper
-    delay(1000);
     retract_C1(); //brings swiper back accross the screen
     retract_C3(); //retracts second swiper to release board
     board_labeled = true
@@ -64,6 +61,7 @@ void extend_C1() {
     while (digitalRead(S4 == LOW)) {
       digitalWrite(relayC1, HIGH);
     }
+  delay(1000); //just in case
   }
 }
 
@@ -73,6 +71,7 @@ void extend_C2() {
     while (digitalRead(S6 == LOW)) {
       digitalWrite(relayC2, HIGH);
     }
+  delay(1000); //just in case
   }
 }
 
@@ -82,6 +81,7 @@ void extend_C3() {
     while (digitalRead(S8 == LOW)) {
       digitalWrite(relayC3, HIGH);
     }
+  delay(1000); //just in case
   }
 }
 
@@ -91,6 +91,7 @@ void retract_C1() {
     while (digitalRead(S3 == LOW)) {
       digitalWrite(relayC3, LOW); //is this how you do this?
     }
+  delay(1000); //just in case
   }
 }
 
@@ -100,6 +101,7 @@ void retract_C2() {
     while (digitalRead(S5 == LOW)) {
       digitalWrite(relayC3, LOW); //is this how you do this?
     }
+  delay(1000); //just in case
   }
 }
 
@@ -109,5 +111,6 @@ void retract_C3() {
     while (digitalRead(S7 == LOW)) {
       digitalWrite(relayC3, LOW); //is this how you do this?
     }
+  delay(1000); //just in case
   }
 }
