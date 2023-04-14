@@ -1,7 +1,12 @@
+// ---------- Libraries ----------
 #include <AccelStepper.h>
 
+
+// ---------- Other Info ----------
 // 1 full rotation = 200 Steps
 
+
+// ---------- Pins ----------
 const int stepPin = 2;        // Yellow driver cable
 const int dirPin = 3;         // Blue driver cable
 const int relayC1 = 4;        // Pin for relay pneumatic cylinder C1
@@ -17,37 +22,30 @@ const int S7 = 11;            // Pin for pneumatic cylinder C3 sensor 7
 const int S8 = 12;            // Pin for pneumatic cylinder C3 sensor 8
 const int relayfan = 13;      // Pin for relay to start/stop the fan
 
-// n is the stepsize for one step
-int n = 5;                    
-// if n = 1, every single step is printed (massive lag) 
-// if n = 5, every fifth step is printed a lot less lag 
 
+// ---------- Variables ----------
+int n = 5; // n is the stepsize for one step. If n = 1, every single step is printed (massive lag). If n = 5, every fifth step is printed a lot less lag
 int stepperspeed = 2000;
-
 int steps = 0; // variable for measuring steps, actual amount of steps = steps*n
-
 float mminsteps = 1.587; // 1 mm = 10 steps (needs to be determined)
 int sensordistancemm = 100; // distance between the sensors in mm
-
 int totaldistancemm = 450; // distance in mm from sensor 1 to where middle of board needs to be 
-
 bool motorMoved = false; // Variable to save motorposition so that stepsToMove are moved only once
-
+int state_tracker = 0; //This variable will track the current state to avoid errors (NOT USED CURRENTLY)
 
 AccelStepper feedinstepper(1, stepPin, dirPin);  // definition of first stepper motor 
 
 
-// --------------------------------------------- Setup 
-
+// ----------Setup ---------- 
 void setup() {
-  pinMode(S1, INPUT);
-  pinMode(S2, INPUT);
-  pinMode(S3, INPUT);
-  pinMode(S4, INPUT);
-  pinMode(S5, INPUT);
-  pinMode(S6, INPUT);
-  pinMode(S7, INPUT);
-  pinMode(S8, INPUT);
+  pinMode(S1, INPUT); // IR sensor 1
+  pinMode(S2, INPUT); // IR sensor 2
+  pinMode(S3, INPUT); // C1 sensor at retracted position
+  pinMode(S4, INPUT); // C1 sensor at expanded position
+  pinMode(S5, INPUT); // C2 sensor at retracted position
+  pinMode(S6, INPUT); // C2 sensor at expanded position
+  pinMode(S7, INPUT); // C3 sensor at retracted position
+  pinMode(S8, INPUT); // C3 sensor at expanded position
   pinMode(stepPin,OUTPUT);
   pinMode(dirPin,OUTPUT);
   pinMode(relayC1,OUTPUT);
@@ -58,70 +56,47 @@ void setup() {
   Serial.begin(9600);
   feedinstepper.setMaxSpeed(1000);  // Sets max speed for stepper motor, needed for the library
   feedinstepper.setAcceleration(0); // if 0 Acceleration is deactivated because it causes inaccuracy but the line is needed for the library
-  
 }
 
 
-// --------------------------------------------- Loop 
-
-
+// ----------Main Loop ---------- 
 void loop() {
-  // If first sensor senses board the motor starts rolling 
-  while (digitalRead(S1) == LOW && digitalRead(S2) == HIGH ) {
-    
+  while (digitalRead(S1) == LOW && digitalRead(S2) == HIGH) { // If first sensor senses board the motor starts rolling
     steppermove();
-    motorMoved = false;  // is needed for tests so we can reset the motorposition without having to reupload
+    motorMoved = false; // s needed for tests so we can reset the motorposition without having to reupload
   }
 
-
-  
-  // Both sensors LOW, starts to count steps 
   int steps = 0; // first steps need to be reset 
-  while (digitalRead(S1) == LOW && digitalRead(S2) == LOW) {
- 
+  while (digitalRead(S1) == LOW && digitalRead(S2) == LOW) { // Both sensors LOW, starts to count steps
     steppermove();
     steps++;
-
     //Serial.print("Amount of steps: "); // steps actually don't need to be printed 
     //Serial.println(steps);           // if more accuracy is needed decrease n and dont print every step 
-
-  
   }  
 
-
   // this is actually the calculation, it kind of needs to be here   
-
   int sensordistance = sensordistancemm * mminsteps; // distance between the sensors in steps
   int totaldistance = totaldistancemm * mminsteps; // total distance in steps
-
   int boardlength = steps * n + sensordistance; // boardlength in steps
   int boardlengthmm = boardlength / mminsteps; // boardlength in mm to print 
-
   int stepsToMove = totaldistance - boardlength / 2;  // calculated amount of steps that need to be taken
 
-
-
-// as soon as sensor 1 looses contact, length measurement is done, steps to move is being calculated and the motor moves the amount of steps 
-
-  if (digitalRead(S1) == HIGH && digitalRead(S2) == LOW && !motorMoved) {  // s1 no board s2 board and motor did not already move 
+  // as soon as sensor 1 looses contact, length measurement is done, steps to move is being calculated and the motor moves the amount of steps 
+  if (digitalRead(S1) == HIGH && digitalRead(S2) == LOW && !motorMoved && motorMoved == false) {  // s1 no board s2 board and motor did not already move 
     feedinstepper.move(-stepsToMove); // needs to be negative for the right direction
     Serial.print("StepsToMove = ");
     Serial.print(stepsToMove);
     steppermovesteps (); 
-    
     motorMoved = true; //important so that motor only moves this distance once 
   }
 
 // first cylinder C1 has to move down to position S4
 // now the pneumatic cylinder C3 moves from S7 to S8
-
 }
 
-// --------------------------------------------- Functions
 
-
-void steppermove () { //n number of steps in the loop, we have to check for accuracy 
-
+//----------Functions ----------
+void steppermove () { //n number of steps in the loop, we have to check for accuracy
   for(int x = 0; x < n; x++) {
     digitalWrite(stepPin, HIGH);
     delayMicroseconds(stepperspeed);
@@ -129,6 +104,7 @@ void steppermove () { //n number of steps in the loop, we have to check for accu
     delayMicroseconds(stepperspeed);
   }
 }
+
 
 void stepperstop () { //n number of steps in the loop, we have to check for accuracy 
 
@@ -138,29 +114,25 @@ void stepperstop () { //n number of steps in the loop, we have to check for accu
     digitalWrite(stepPin, LOW);
     delayMicroseconds(stepperspeed);
   }
-
 }
 
 
-
 void steppermovesteps() {  // stepper moves the calculated amount of steps, saved in "stepsToMove" to align the board
-
   while (feedinstepper.distanceToGo() != 0) {
     feedinstepper.setSpeed(100);
     feedinstepper.runSpeedToPosition();
   } 
-
-
 }
 
-void extendC1() {
+
+int extend_cylinder() {
   if (digitalRead(S3) == HIGH){
   digitalWrite(relayC1, HIGH);
   }
-
 }
 
-void retractC1() {
-if (digitalRead(S4) == HIGH){
+
+int retract_cylinder() {
+  if (digitalRead(S4) == HIGH){
   digitalWrite(relayC1, LOW);
 }}
