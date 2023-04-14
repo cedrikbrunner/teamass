@@ -48,11 +48,12 @@ void loop() {
     extend_C3(); //lowers second swiper
     retract_C1(); //brings swiper back accross the screen
     retract_C3(); //retracts second swiper to release board
-    board_labeled = true
+    board_labeled = true;
   }
 
-  if (digitalRead(S1) == LOW)
-    board_labeled = false //for testing purposes to reset the system
+  if (digitalRead(S1) == LOW) {
+    board_labeled = false; //for testing purposes to reset the system
+  }
 }
 
 //----------Functions ----------
