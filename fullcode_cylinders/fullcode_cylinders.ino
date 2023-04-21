@@ -1,14 +1,14 @@
 // ---------- Pins ----------
-const int stepPin = 2;        // Yellow driver cable
-const int dirPin = 3;         // Blue driver cable
-const int relayC1 = 4;        // Pin for relay pneumatic cylinder C1
-const int relayC2 = 5;        // Pin for relay pneumatic cylinder C2
-const int relayC3 = 6;        // Pin for relay pneumatic cylinder C3
-const int S1 = 7;             // Pin for IR Sensor 1
-const int S2 = 8;             // Pin for IR Sensor 2
-const int S3 = 9;             // Pin for pneumatic cylinder C1 sensor 3
-const int S4 = 10;            // Pin for pneumatic cylinder C1 sensor 4
-const int S5 = 11;            // Pin for pneumatic cylinder C2 sensor 5
+const int stepPin = 0;        // Yellow driver cable
+const int dirPin = 0;         // Blue driver cable
+const int relayC1 = 2;        // Pin for relay pneumatic cylinder C1
+const int relayC2 = 3;        // Pin for relay pneumatic cylinder C2
+const int relayC3 = 4;        // Pin for relay pneumatic cylinder C3
+const int S1 = 5;             // Pin for IR Sensor 1
+const int S2 = 6;             // Pin for IR Sensor 2
+const int S3 = 7;             // Pin for pneumatic cylinder C1 sensor 3
+const int S4 = 8;            // Pin for pneumatic cylinder C1 sensor 4
+const int S5 = 9;            // Pin for pneumatic cylinder C2 sensor 5
 const int S6 = 10;            // Pin for pneumatic cylinder C2 sensor 6
 const int S7 = 11;            // Pin for pneumatic cylinder C3 sensor 7
 const int S8 = 12;            // Pin for pneumatic cylinder C3 sensor 8
