@@ -47,6 +47,7 @@ bool printfinished = false;
 void setup() {
   pinMode(S1, INPUT); // IR sensor 1
   pinMode(S2, INPUT); // IR sensor 2
+  pinMode(S9, INPUT); // IR sensor 3
   pinMode(S3, INPUT); // C1 sensor at retracted position
   pinMode(S4, INPUT); // C1 sensor at expanded position
   pinMode(S5, INPUT); // C2 sensor at retracted position
@@ -156,9 +157,8 @@ if (readytoprint == true && digitalRead(S2) == LOW){
       delay(printwaittime);
     }
   } // ----- finish printing
-  
   printfinished = true;
-  while (digitalRead(S3) == LOW && digitalRead(S5) == LOW && digitalRead(S7) == LOW && digitalRead(S8) == HIGH){
+  while (digitalRead(S3) == LOW && digitalRead(S5) == LOW && digitalRead(S7) == LOW && digitalRead(S9) == HIGH){
    steppermove();
   }
  
