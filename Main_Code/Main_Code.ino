@@ -1,6 +1,6 @@
 
 // Input Pins
-const int S0Pin = 9;     // PIN S0
+const int S0Pin = 10;    // PIN S0
 const int S1Pin = 7;     // PIN S1
 const int S2Pin = 9;     // PIN S2
 const int S3Pin = 32;    // PIN S3
@@ -9,8 +9,8 @@ const int S5Pin = 40;    // PIN S5
 const int S6Pin = 44;    // PIN S6
 const int S7Pin = 48;    // PIN S7
 const int S8Pin = 52;    // PIN S8
-const int S9Pin = 56;    // PIN S9
-const int S10Pin = 60;   // PIN S10
+const int S9Pin = 9;     // PIN S9
+const int S10Pin = 1;    // PIN S10
 
 // Output Pins
 const int stepPin = 2;   // Yellow driver cable
@@ -75,12 +75,15 @@ void setup() {
   pinMode(S6Pin, INPUT);
   pinMode(S7Pin, INPUT);
   pinMode(S8Pin, INPUT);
+  pinMode(S9Pin, INPUT);
+  pinMode(S10Pin, INPUT);
   pinMode(stepPin, OUTPUT);
   pinMode(dirPin, OUTPUT);
   pinMode(C1Pin, OUTPUT);
   pinMode(C2Pin, OUTPUT);
   pinMode(C3Pin, OUTPUT);
   pinMode(FanPin, OUTPUT);
+  Serial.begin(9600);
 }
 
 void loop() {
@@ -100,10 +103,11 @@ void loop() {
       if (S0 == 1 and S1 == 1) {
         ProcessPhase = 1;
         LengthBoard = distanceS1toS2;
+        StepState = 0;
       }
-      if (S10 = 1){           // Bypass
-        ProcessPhase = 9;
-      }
+      //if (S10 = 1){           // Bypass
+        //ProcessPhase = 9;
+      //}
       break;
     case 1:                   // Insert board
       if (S1 == 1) {
@@ -167,9 +171,11 @@ void loop() {
      case 8:
         if (S9 == 0){
           StepState = 1;
+          FanState = 1;
           StepSpeed = 4000;
         } else if (S9 == 1){
           StepState = 0;
+          FanState = 0;
           StepSpeed = INITSpeed;
         }
      
@@ -182,8 +188,6 @@ void loop() {
         StepState = 0;
         ProcessPhase = 0;
       }
-      
-      if (S4)
         break;
      default:
     ;
@@ -201,6 +205,7 @@ void loop() {
 // Initialising
 void initialisation() {
   ProcessPhase = 0;
+  StepState = 0;
   timecounter = 0;
   C1 = 0;
   C2 = 0;
@@ -217,17 +222,37 @@ void initialisation() {
 
 // Inputs
 void updateSensors() {
-  S0 = digitalRead(S0Pin);
-  S1 = digitalRead(S1Pin);
-  S2 = digitalRead(S2Pin);
+  S0 != digitalRead(S0Pin);
+  S1 != digitalRead(S1Pin);
+  S2 != digitalRead(S2Pin);
   S3 = digitalRead(S3Pin);
   S4 = digitalRead(S4Pin);
   S5 = digitalRead(S5Pin);
   S6 = digitalRead(S6Pin);
   S7 = digitalRead(S7Pin);
   S8 = digitalRead(S8Pin);
-  S9 = digitalRead(S9Pin);
+  S9 != digitalRead(S9Pin);
   S10 = digitalRead(S10Pin);
+
+  static int p = 1;
+  p += 1;
+  if (p == 1000) {
+  Serial.println("Sensor update:");
+  Serial.println(S0);
+  Serial.println(S1);
+  Serial.println(S2);
+  Serial.println(S3);
+  Serial.println(S4);
+  Serial.println(S5);
+  Serial.println(S6);
+  Serial.println(S7);
+  Serial.println(S8);
+  Serial.println(S9);
+  Serial.println(S10);
+  Serial.println(ProcessPhase);
+  Serial.println(StepState);
+  p = 1;
+  }
 }
 
 
@@ -267,22 +292,24 @@ void calculatePosition() {
 
 // Outputs
 void updateStepper() {
-  if (StepState = 0) {                // Stop
-    digitalWrite(stepPin, LOW);
-  } else if (StepState = 1) {         // Forward
-      if (dirState == HIGH) {
-        digitalWrite(dirPin, LOW);
-        dirState = LOW;
-      }
+  if (StepState == 0) {                // Stop
+    //digitalWrite(stepPin, LOW);
+  } 
+  if (StepState == 1) {  // Forward
+    if (dirState == HIGH) {
+      digitalWrite(dirPin, LOW);
+      dirState = LOW;
+    }
     digitalWrite(stepPin, HIGH);
     delayMicroseconds(StepSpeed);
     digitalWrite(stepPin, LOW);
-    delayMicroseconds(StepSpeed);    
-  } else if (StepState = 2) {         // Backward
-      if (dirState == LOW) {
-        digitalWrite(dirPin, HIGH);
-        dirState = HIGH;
-      }
+    delayMicroseconds(StepSpeed);
+}
+if (StepState == 2) {  // Backward
+  if (dirState == LOW) {
+    digitalWrite(dirPin, HIGH);
+    dirState = HIGH;
+  }
     digitalWrite(stepPin, HIGH);
     delayMicroseconds(StepSpeed);
     digitalWrite(stepPin, LOW);
