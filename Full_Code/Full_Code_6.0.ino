@@ -43,6 +43,8 @@ const int printtimeC1 = 500;
 const int printtimeC3 = 2500;
 bool readytoprint = false; 
 bool printfinished = false;
+int drydistance = 250;
+int drytime = 30000; // time in ms 
 //AccelStepper feedinstepper(1, stepPin, dirPin);  // definition of first stepper motor 
 
 
@@ -74,101 +76,131 @@ void setup() {
 
 // ----------Main Loop ---------- 
 void loop() {
-  
-  while (digitalRead(S1) == LOW && digitalRead(S2) == HIGH) { // If first sensor senses board the motor starts rolling
-    steppermove();
-      motorMoved = false; // s needed for tests so we can reset the motorposition without having to reupload
-    readytoprint = false;
-    printfinished = false;
-  }
 
-  int steps = 0; // first steps need to be reset 
-  while (digitalRead(S1) == LOW && digitalRead(S2) == LOW) { // Both sensors LOW, starts to count steps
-    steppermove();
-    steps++;
-    //Serial.print("Amount of steps: "); // steps actually don't need to be printed 
-    //Serial.println(steps);           // if more accuracy is needed decrease n and dont print every step 
-  }  
-
-  // this is actually the calculation, it kind of needs to be here   
-  int sensordistance = sensordistancemm * mminsteps; // distance between the sensors in steps
-  int totaldistance = (totaldistancemm-correction) * mminsteps; // total distance in steps
-  int boardlength = steps * n + sensordistance; // boardlength in steps
-  int boardlengthmm = boardlength / mminsteps; // boardlength in mm to print 
-  int stepsToMove = totaldistance - (boardlength /2) ;  // calculated amount of steps that need to be taken
-
-  // as soon as sensor 1 looses contact, length measurement is done, steps to move is being calculated and the motor moves the amount of steps 
-  if (digitalRead(S1) == HIGH && digitalRead(S2) == LOW && !motorMoved && motorMoved == false) {  // s1 no board s2 board and motor did not already move 
-   
-    Serial.print("StepsToMove = "); Serial.println(stepsToMove);
-    Serial.print("Boardlength= "); Serial.println(boardlengthmm);
-    if (stepsToMove > 0) {
-      digitalWrite(dirPin, LOW);
-        for(int x = 0; x < stepsToMove; x++) {
-              digitalWrite(stepPin, HIGH);
-              delayMicroseconds(stepperspeed);
-              digitalWrite(stepPin, LOW);
-              delayMicroseconds(stepperspeed);
-            }
+if (digitalRead(modeswitch) == HIGH) { //Bypass mode deactivated
+ 
     
+
+    while (digitalRead(S2) == HIGH && ((digitalRead(S1) == LOW) || (digitalRead(S10) == LOW))) { // If first sensor senses board the motor starts rolling
+      steppermove();
+        motorMoved = false; // s needed for tests so we can reset the motorposition without having to reupload
+      readytoprint = false;
+      printfinished = false;
     }
 
-    else {
-      digitalWrite(dirPin, HIGH); // set direction to backward
-      for(int x = 0; x < -stepsToMove; x++) {
-        digitalWrite(stepPin, LOW);
-        delayMicroseconds(stepperspeed);
+    int steps = 0; // first steps need to be reset 
+    while (digitalRead(S1) == LOW && digitalRead(S2) == LOW) { // Both sensors LOW, starts to count steps
+      steppermove();
+      steps++;
+      //Serial.print("Amount of steps: "); // steps actually don't need to be printed 
+      //Serial.println(steps);           // if more accuracy is needed decrease n and dont print every step 
+    }  
+
+    // this is actually the calculation, it kind of needs to be here   
+    int sensordistance = sensordistancemm * mminsteps; // distance between the sensors in steps
+    int totaldistance = (totaldistancemm-correction) * mminsteps; // total distance in steps
+    int boardlength = steps * n + sensordistance; // boardlength in steps
+    int boardlengthmm = boardlength / mminsteps; // boardlength in mm to print 
+    int stepsToMove = totaldistance - (boardlength /2) ;  // calculated amount of steps that need to be taken
+
+    // as soon as sensor 1 looses contact, length measurement is done, steps to move is being calculated and the motor moves the amount of steps 
+    if (digitalRead(S1) == HIGH && digitalRead(S2) == LOW && !motorMoved && motorMoved == false) {  // s1 no board s2 board and motor did not already move 
+    
+      Serial.print("StepsToMove = "); Serial.println(stepsToMove);
+      Serial.print("Boardlength= "); Serial.println(boardlengthmm);
+      if (stepsToMove > 0) {
+        digitalWrite(dirPin, LOW);
+          for(int x = 0; x < stepsToMove; x++) {
+                digitalWrite(stepPin, HIGH);
+                delayMicroseconds(stepperspeed);
+                digitalWrite(stepPin, LOW);
+                delayMicroseconds(stepperspeed);
+              }
+      
+      }
+
+      else {
+        digitalWrite(dirPin, HIGH); // set direction to backward
+        for(int x = 0; x < -stepsToMove; x++) {
+          digitalWrite(stepPin, LOW);
+          delayMicroseconds(stepperspeed);
+          digitalWrite(stepPin, HIGH);
+          delayMicroseconds(stepperspeed);
+        }
+      }
+      readytoprint = true;
+      motorMoved = true; //important so that motor only moves this distance once 
+      Serial.println(readytoprint);
+    }
+  //print section
+  if (readytoprint == true && digitalRead(S2) == LOW){
+    for(int x = 0; x < numberofprints; x++) {
+      Serial.println("ready to print");
+      
+      if (digitalRead(S3) == LOW && digitalRead(S5) == LOW){ //alu and swiper retracted
+        Serial.println("expand C3");
+        digitalWrite(relayC3,HIGH); //C3 expanding
+        delay(printtimeC3);
+      }
+      if (digitalRead(S8)==LOW && digitalRead(S3)==LOW) { //C3 expanded and Swiper retracted
+        digitalWrite(relayC2,HIGH); //Alu expand
+        delay(printtimeC1);
+      }
+      if (digitalRead(S6)==LOW){ //if alu expanded
+        digitalWrite(relayC3,LOW); //C3 retracted -> color distribution
+        delay(printtimeC3);
+      }
+      if (digitalRead(S7)==LOW){ //C3 retracted
+        digitalWrite(relayC2,LOW); //Alu retracting
+        digitalWrite(relayC1,HIGH); //Swiper expanding
+        delay(printtimeC1);
+      }
+      if(digitalRead(S4)==LOW && digitalRead(S5) == LOW){ //if alu retracted and swiper expanded
+        digitalWrite(relayC3,HIGH); //C3 expanding => screenprinting
+        delay(printtimeC3);
+      }
+      if (digitalRead(S8)==LOW){ //C3 expanded
+        digitalWrite(relayC1,LOW); //swiper retracting
+        delay(printtimeC1);
+      }
+      if (digitalRead(S3) == LOW && digitalRead(S5) == LOW){ //alu and swiper retracted
+        digitalWrite(relayC3, LOW); //C3 retracting
+        delay(printtimeC3);
+      }
+    } // ----- finish printing
+    printfinished = true;
+    while (digitalRead(S3) == LOW && digitalRead(S5) == LOW && digitalRead(S7) == LOW && digitalRead(S9) == HIGH){
+    digitalWrite(dirPin, LOW);
+      for(int x = 0; x < -drydistance; x++) {
         digitalWrite(stepPin, HIGH);
         delayMicroseconds(stepperspeed);
-      }
-    }
-    readytoprint = true;
-    motorMoved = true; //important so that motor only moves this distance once 
-    Serial.println(readytoprint);
-  }
-//print section
-if (readytoprint == true && digitalRead(S2) == LOW){
-  for(int x = 0; x < numberofprints; x++) {
-    Serial.println("ready to print");
+        digitalWrite(stepPin, LOW);
+        delayMicroseconds(stepperspeed);
+      }  
+
     
-    if (digitalRead(S3) == LOW && digitalRead(S5) == LOW){ //alu and swiper retracted
-      Serial.println("expand C3");
-      digitalWrite(relayC3,HIGH); //C3 expanding
-      delay(printtimeC3);
+
+drying ();            // do the drying
+    
+    steppermove();        // move further, should stop as soon as it hits S9
+
+    
     }
-    if (digitalRead(S8)==LOW && digitalRead(S3)==LOW) { //C3 expanded and Swiper retracted
-      digitalWrite(relayC2,HIGH); //Alu expand
-      delay(printtimeC1);
-    }
-    if (digitalRead(S6)==LOW){ //if alu expanded
-      digitalWrite(relayC3,LOW); //C3 retracted -> color distribution
-      delay(printtimeC3);
-    }
-    if (digitalRead(S7)==LOW){ //C3 retracted
-      digitalWrite(relayC2,LOW); //Alu retracting
-      digitalWrite(relayC1,HIGH); //Swiper expanding
-      delay(printtimeC1);
-    }
-    if(digitalRead(S4)==LOW && digitalRead(S5) == LOW){ //if alu retracted and swiper expanded
-      digitalWrite(relayC3,HIGH); //C3 expanding => screenprinting
-      delay(printtimeC3);
-    }
-    if (digitalRead(S8)==LOW){ //C3 expanded
-      digitalWrite(relayC1,LOW); //swiper retracting
-      delay(printtimeC1);
-    }
-    if (digitalRead(S3) == LOW && digitalRead(S5) == LOW){ //alu and swiper retracted
-      digitalWrite(relayC3, LOW); //C3 retracting
-      delay(printtimeC3);
-    }
-  } // ----- finish printing
-  printfinished = true;
-  while (digitalRead(S3) == LOW && digitalRead(S5) == LOW && digitalRead(S7) == LOW && digitalRead(S9) == HIGH){
-   steppermove();
+  
   }
  
+} 
+
+else { // Bypass Mode Activated
+
+  while (digitalRead(S10) == LOW  || digitalRead(S9) == HIGH) {  // Sensor 1 erkennt etwas
+      steppermove();  // Motor bewegen
+    
+  }
 }
- 
+
+
+
 }
 
 
@@ -201,7 +233,19 @@ void steppermovesteps() {  // stepper moves the calculated amount of steps, save
         delayMicroseconds(stepperspeed);
         digitalWrite(stepPin, LOW);
         delayMicroseconds(stepperspeed);
+  }
+
+}
+
+void steppermovesteps2() {  // stepper moves the calculated amount of steps, saved in "stepsToMove" to align the board
+  digitalWrite(dirPin, LOW);
+  for(int x = 0; x < -drydistance; x++) {
+        digitalWrite(stepPin, HIGH);
+        delayMicroseconds(stepperspeed);
+        digitalWrite(stepPin, LOW);
+        delayMicroseconds(stepperspeed);
       }
+
 }
 
 void steppermovestepsback() {  // stepper moves the calculated amount of steps, saved in "stepsToMove" to align the board
@@ -212,6 +256,12 @@ void steppermovestepsback() {  // stepper moves the calculated amount of steps, 
         digitalWrite(stepPin, HIGH);
         delayMicroseconds(stepperspeed);
       }
+}
+
+void drying () {
+  digitalWrite(relayfan, HIGH);
+  delay(drytime);         // for this amount of time 
+  digitalWrite(relayfan, LOW);
 }
 
 
@@ -228,3 +278,4 @@ int retract_cylinder() {
   
   }
 }
+
